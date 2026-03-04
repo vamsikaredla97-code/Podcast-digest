@@ -47,17 +47,6 @@ PODCAST_FEEDS = [
 
 NEWSLETTER_FEEDS = [
     {
-        "name": "Stratechery",
-        "short_name": "Stratechery",
-        "author": "Ben Thompson",
-        # Self-hosted (NOT Substack). Public feed = free Weekly Articles only (~1/week).
-        # Paid subscribers get a personalised tokenised URL for Daily Updates + podcasts.
-        "rss_url": "https://stratechery.com/feed",
-        "type": "newsletter",
-        "emoji": "📝",
-        "note": "Public feed = free weekly articles only. Paid content needs a personalised subscriber URL.",
-    },
-    {
         "name": "Not Boring",
         "short_name": "Not Boring",
         "author": "Packy McCormick",
