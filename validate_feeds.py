@@ -17,7 +17,18 @@ def validate_feed(feed: dict) -> dict:
     result = {"name": name, "url": url, "ok": False, "entries": 0, "error": None}
 
     try:
-        resp = requests.get(url, timeout=TIMEOUT, headers={"User-Agent": "PodcastDigest/1.0"})
+        # Browser-like UA: Libsyn, Substack, and Stratechery 403 bot agents
+        resp = requests.get(
+            url,
+            timeout=TIMEOUT,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/121.0.0.0 Safari/537.36"
+                )
+            },
+        )
         resp.raise_for_status()
     except requests.RequestException as e:
         result["error"] = str(e)

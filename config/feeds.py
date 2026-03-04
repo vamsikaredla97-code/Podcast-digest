@@ -1,37 +1,45 @@
 """
 RSS feed configuration for all podcast and newsletter sources.
 
-Feed URLs sourced and cross-referenced via Apple Podcasts, Substack, Libsyn,
-and Megaphone in March 2026. Run `python validate_feeds.py` to confirm all
-feeds are live before first use.
+Feed URLs researched and cross-referenced via Apple Podcasts, Podnews,
+Podchaser, Feedspot, and Substack in March 2026.
+
+IMPORTANT: Libsyn, Substack, and Stratechery all return HTTP 403 to headless
+fetchers (anti-scraping). This is normal — feeds are valid and active in RSS
+readers. The feed_checker.py sets a browser-like User-Agent to work around this.
+
+Run `python validate_feeds.py` after initial setup to confirm all feeds respond.
 """
 
 PODCAST_FEEDS = [
     {
         "name": "The Twenty Minute VC",
         "short_name": "20VC",
-        # Distributed via Megaphone (Harry Stebbings / The Twentyminutevc Fund)
-        # Apple Podcasts ID: 958230465
-        "rss_url": "https://feeds.megaphone.fm/twentyminutevc",
+        # Hosted on Libsyn. Apple Podcasts ID: 958230465
+        # Spotify: https://open.spotify.com/show/3j2KMcZTtgTNBKwtZBMHvl
+        "rss_url": "https://thetwentyminutevc.libsyn.com/rss",
+        "spotify_show_url": "https://open.spotify.com/show/3j2KMcZTtgTNBKwtZBMHvl",
         "type": "podcast",
         "emoji": "🎙️",
     },
     {
         "name": "Lenny's Podcast",
         "short_name": "Lenny's Podcast",
-        # Distributed via Simplecast; hosted at lennysnewsletter.com
+        # Hosted on Substack (publication ID: 10845). Audio is free; transcripts paywalled.
         # Apple Podcasts ID: 1627920305
-        "rss_url": "https://www.lennysnewsletter.com/podcast/feed",
-        "rss_url_alt": "https://feeds.simplecast.com/OKKkUFPr",
+        # Spotify: https://open.spotify.com/show/2dR1MUZEHCOnz1LVfNac0j
+        "rss_url": "https://api.substack.com/feed/podcast/10845.rss",
+        "spotify_show_url": "https://open.spotify.com/show/2dR1MUZEHCOnz1LVfNac0j",
         "type": "podcast",
         "emoji": "🎙️",
     },
     {
         "name": "All-In Podcast",
         "short_name": "All-In",
-        # Distributed via Libsyn (Chamath, Jason, Sacks, Friedberg)
-        # Apple Podcasts ID: 1502871393
+        # Hosted on Libsyn (Chamath, Jason, Sacks, Friedberg). Apple Podcasts ID: 1502871393
+        # Spotify: https://open.spotify.com/show/2IqXAVFR4e0Bmyjsdc8QzF
         "rss_url": "https://allinchamathjason.libsyn.com/rss",
+        "spotify_show_url": "https://open.spotify.com/show/2IqXAVFR4e0Bmyjsdc8QzF",
         "type": "podcast",
         "emoji": "🎙️",
     },
@@ -42,18 +50,21 @@ NEWSLETTER_FEEDS = [
         "name": "Stratechery",
         "short_name": "Stratechery",
         "author": "Ben Thompson",
-        # Free public feed — member-only posts appear truncated
+        # Self-hosted (NOT Substack). Public feed = free Weekly Articles only (~1/week).
+        # Paid subscribers get a personalised tokenised URL for Daily Updates + podcasts.
         "rss_url": "https://stratechery.com/feed",
         "type": "newsletter",
         "emoji": "📝",
-        "note": "Free articles only; member-only posts are paywalled",
+        "note": "Public feed = free weekly articles only. Paid content needs a personalised subscriber URL.",
     },
     {
         "name": "Not Boring",
         "short_name": "Not Boring",
         "author": "Packy McCormick",
-        # Packy McCormick's Substack
-        "rss_url": "https://notboring.substack.com/feed",
+        # Substack with custom domain. Both URLs resolve to the same content.
+        # Paid "Not Boring World" tier launched Jan 2026.
+        "rss_url": "https://www.notboring.co/feed",
+        "rss_url_alt": "https://notboring.substack.com/feed",
         "type": "newsletter",
         "emoji": "📝",
     },
@@ -61,8 +72,9 @@ NEWSLETTER_FEEDS = [
         "name": "The Generalist",
         "short_name": "The Generalist",
         "author": "Mario Gabriele",
-        # Mario Gabriele's newsletter at generalist.com
+        # Substack with custom domain. Articles mostly free; community paywalled.
         "rss_url": "https://www.generalist.com/feed",
+        "rss_url_alt": "https://generalist.substack.com/feed",
         "type": "newsletter",
         "emoji": "📝",
     },

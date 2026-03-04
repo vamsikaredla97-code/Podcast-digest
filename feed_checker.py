@@ -50,7 +50,15 @@ def fetch_new_items(lookback_hours: int = LOOKBACK_HOURS) -> list[dict]:
             resp = requests.get(
                 url,
                 timeout=TIMEOUT,
-                headers={"User-Agent": "PodcastDigest/1.0"},
+                # Browser-like UA required: Libsyn, Substack, and Stratechery
+                # return HTTP 403 to generic/bot user agents.
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/121.0.0.0 Safari/537.36"
+                    )
+                },
             )
             resp.raise_for_status()
             parsed = feedparser.parse(resp.text)
