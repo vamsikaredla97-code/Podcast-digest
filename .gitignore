@@ -1,0 +1,8 @@
+.env
+.digest_state.json
+pdfs/
+digest.log
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
