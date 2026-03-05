@@ -1,93 +1,149 @@
 # Podcast & Newsletter Daily Digest
 
-Automated morning digest that checks RSS feeds, summarises new episodes and articles, sends individual WhatsApp messages, and logs everything to Notion.
+Automated daily digest delivered to **vamsikaredla97@gmail.com** every morning at 07:00.
 
-## What it does
+For each new **podcast episode**:
+1. Finds the YouTube version and fetches the full transcript via **Supadata API**
+2. Writes a bullet-point summary (key frameworks, metrics, memorable quotes) using **Claude AI**
+3. Generates a **PDF** of the full transcript
+4. Emails the summary with the PDF attached
 
-- **07:00 daily** — checks all feeds for items published in the last 28 hours
-- **Podcasts**: finds Spotify link → fetches YouTube transcript → Claude summary → PDF → WhatsApp
-- **Newsletters**: fetches full article → Claude summary → PDF → WhatsApp
-- **Notion log**: every item appended to a Notion database (Title, Publication, URL, Summary, Date, Type)
-- **Deduplication**: state file prevents sending the same item twice
+For each new **newsletter article**:
+1. Fetches the full article from the RSS feed
+2. Writes a bullet-point summary in the same style
+3. Generates a **PDF** of the full article
+4. Emails the summary with the PDF attached
 
-## Sources
+Everything is also logged to a **Notion database** (Title, Publication, URL, Summary, Date, Type).
 
-| Source | Type | Feed |
-|--------|------|------|
-| The Twenty Minute VC | Podcast | `feeds.megaphone.fm/twentyminutevc` |
-| Lenny's Podcast | Podcast | `lennyspodcast.com/feed/` |
-| All-In Podcast | Podcast | `feeds.megaphone.fm/all-in-with-chamath-...` |
-| Stratechery | Newsletter | `stratechery.com/feed/` |
-| Not Boring | Newsletter | `notboring.co/feed` |
-| The Generalist | Newsletter | `generalist.com/feed` |
+---
+
+## Feeds configured out of the box
+
+### Podcasts
+| Show | Host |
+|------|------|
+| The Twenty Minute VC (20VC) | Harry Stebbings |
+| Lenny's Podcast | Lenny Rachitsky |
+| All-In Podcast | Chamath, Jason, Sacks, Friedberg |
+| Acquired | Ben Gilbert & David Rosenthal |
+| My First Million | Sam Parr & Shaan Puri |
+| Lex Fridman Podcast | Lex Fridman |
+| How I Built This | Guy Raz |
+
+### Newsletters
+| Newsletter | Author |
+|------------|--------|
+| Not Boring | Packy McCormick |
+| The Generalist | Mario Gabriele |
+| Morning Brew | Morning Brew |
+| The Hustle | The Hustle |
+| TLDR Newsletter | TLDR |
+| Stratechery | Ben Thompson |
+
+To add or remove feeds, edit `config/feeds.py` and re-run `python validate_feeds.py`.
+
+---
 
 ## Setup
 
 ### 1. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure secrets
+### 2. Fill in `.env`
+
 ```bash
 cp .env.example .env
-# Edit .env with your credentials
 ```
 
-Required credentials:
-- **Twilio**: Account SID, Auth Token, WhatsApp sandbox number
-- **Notion**: Integration token + database ID
-- **Anthropic**: API key (for Claude summaries)
-- **YouTube Data API** (optional but recommended for transcripts)
-- **Spotify API** (optional, for Spotify links)
+| Variable | Where to get it |
+|---|---|
+| `SMTP_HOST` | `smtp.gmail.com` for Gmail |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | Your Gmail address |
+| `SMTP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) — 16-char password, not your login password |
+| `EMAIL_TO` | `vamsikaredla97@gmail.com` |
+| `EMAIL_FROM` | Same as `SMTP_USER` |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| `SUPADATA_API_KEY` | [supadata.ai](https://supadata.ai) → Dashboard |
+| `NOTION_TOKEN` | [notion.so/my-integrations](https://www.notion.so/my-integrations) |
+| `NOTION_DATABASE_ID` | From your Notion database URL |
+| `YOUTUBE_API_KEY` | [Google Cloud Console](https://console.cloud.google.com) → YouTube Data API v3 *(recommended)* |
+| `SPOTIFY_CLIENT_ID/SECRET` | [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) *(optional)* |
 
 ### 3. Create the Notion database
-In Notion, create a database with these properties:
-- `Title` — Title
-- `Publication` — Text
-- `URL` — URL
-- `Summary` — Text
-- `Date` — Date
-- `Type` — Select (options: Podcast, Newsletter)
 
-Share it with your Notion integration, then copy the database ID into `.env`.
+Create a new Notion database with these exact properties:
+
+| Property | Type |
+|----------|------|
+| Title | Title |
+| Publication | Text |
+| URL | URL |
+| Summary | Text |
+| Date | Date |
+| Type | Select (`Podcast`, `Newsletter`) |
+
+Share the database with your integration, then copy the database ID from the URL
+(the 32-character string in `notion.so/<DATABASE_ID>?v=...`).
 
 ### 4. Validate feeds
+
 ```bash
 python validate_feeds.py
 ```
 
-### 5. Install cron job (07:00 daily)
-```bash
-python setup_cron.py install
-```
+### 5. Test a manual run
 
-### 6. Test manually
 ```bash
 python digest.py
 ```
 
-## File structure
+Check your inbox — you'll get one email per new item plus a summary email.
 
-```
-digest.py           — Main orchestrator (entry point)
-feed_checker.py     — RSS polling + deduplication logic
-state.py            — Seen-item state (.digest_state.json)
-summariser.py       — Claude-powered summarisation
-transcript.py       — YouTube transcript + Spotify link lookup
-article_fetcher.py  — Full article text scraping
-pdf_generator.py    — PDF creation (fpdf2)
-whatsapp_sender.py  — Twilio WhatsApp sender + message formatters
-notion_logger.py    — Notion database appender
-validate_feeds.py   — One-shot feed URL validator
-setup_cron.py       — Cron job installer/remover
-config/feeds.py     — All RSS URLs + feed metadata
+### 6. Install the daily cron job (07:00)
+
+```bash
+python setup_cron.py install
 ```
 
-## Updating feed URLs
+```bash
+python setup_cron.py show    # view current crontab
+python setup_cron.py remove  # uninstall
+```
 
-All RSS URLs live in `config/feeds.py`. Edit there and re-run `python validate_feeds.py` to confirm.
+---
 
-## WhatsApp sandbox note
+## Project structure
 
-Twilio's WhatsApp sandbox requires recipients to opt in first. In production, apply for a Twilio WhatsApp Business number and update `TWILIO_WHATSAPP_FROM` in `.env`.
+```
+digest.py            — Main orchestrator (entry point)
+setup_cron.py        — Install/remove daily cron job
+validate_feeds.py    — One-time feed validation
+
+config/
+  feeds.py           — All RSS feed URLs — edit to add your own
+
+feed_checker.py      — Polls feeds, filters by 28-hour window
+state.py             — Deduplication (.digest_state.json)
+transcript.py        — Supadata API transcript fetch + YouTube/Spotify link lookup
+article_fetcher.py   — Full-text scraper for newsletter articles
+summariser.py        — Claude AI summaries
+pdf_generator.py     — PDF generation (fpdf2)
+email_sender.py      — SMTP email with HTML body + PDF attachment
+notion_logger.py     — Notion database logger
+```
+
+## Credentials summary
+
+| Service | Required | Purpose |
+|---------|----------|---------|
+| Gmail SMTP | ✅ Yes | Sending emails |
+| Anthropic | ✅ Yes | AI summaries |
+| Supadata | ✅ Yes | YouTube transcripts |
+| Notion | ✅ Yes | Digest log database |
+| YouTube Data API | ⚡ Recommended | Episode link lookup |
+| Spotify API | Optional | Spotify episode links |
