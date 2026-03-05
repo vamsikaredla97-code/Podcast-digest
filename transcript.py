@@ -1,14 +1,19 @@
 """
-YouTube transcript fetching and Spotify link lookup.
+Transcript fetching via Supadata API and Spotify/YouTube link lookup.
+
+Supadata API docs: https://supadata.ai/documentation/youtube/get-transcript
+Auth: x-api-key header
 """
 import re
 import os
 import requests
-from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
 
+SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY", "")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+
+_SUPADATA_BASE = "https://api.supadata.ai/v1"
 
 
 # ── YouTube helpers ────────────────────────────────────────────────────────────
@@ -55,20 +60,40 @@ def search_youtube(query: str) -> str | None:
 
 def get_transcript(youtube_url: str) -> str | None:
     """
-    Return the full transcript text for a YouTube video, or None on failure.
+    Fetch the full transcript for a YouTube video using the Supadata API.
+    Returns the concatenated transcript text, or None on failure.
     """
+    if not SUPADATA_API_KEY:
+        print("[WARN] SUPADATA_API_KEY not set — skipping transcript fetch.")
+        return None
+
     video_id = _extract_video_id(youtube_url)
     if not video_id:
+        print(f"[WARN] Could not extract video ID from: {youtube_url}")
         return None
+
     try:
-        segments = YouTubeTranscriptApi.get_transcript(video_id)
-        return " ".join(s["text"] for s in segments)
-    except (NoTranscriptFound, TranscriptsDisabled) as e:
-        print(f"[WARN] No transcript for {video_id}: {e}")
-        return None
+        r = requests.get(
+            f"{_SUPADATA_BASE}/youtube/transcript",
+            params={"videoId": video_id, "text": "true"},
+            headers={"x-api-key": SUPADATA_API_KEY},
+            timeout=30,
+        )
+        if r.status_code == 404:
+            print(f"[WARN] No transcript available for video {video_id}")
+            return None
+        r.raise_for_status()
+        data = r.json()
+        # Response: {"content": [{"text": "...", "offset": 0, "duration": 5000}], ...}
+        # When text=true, content may be a plain string instead.
+        content = data.get("content", "")
+        if isinstance(content, str):
+            return content.strip() or None
+        if isinstance(content, list):
+            return " ".join(seg.get("text", "") for seg in content).strip() or None
     except Exception as e:
-        print(f"[WARN] Transcript fetch failed for {video_id}: {e}")
-        return None
+        print(f"[WARN] Supadata transcript fetch failed for {video_id}: {e}")
+    return None
 
 
 # ── Spotify helpers ────────────────────────────────────────────────────────────

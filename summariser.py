@@ -1,6 +1,6 @@
 """
 Summariser — converts raw transcript or article text into a structured
-WhatsApp-optimised summary using Claude claude-sonnet-4-6.
+email-optimised summary using Claude claude-sonnet-4-6.
 """
 import os
 import anthropic
@@ -8,23 +8,22 @@ import anthropic
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
 
 PODCAST_SYSTEM = """You are a concise briefing writer. Given a podcast episode transcript, produce a
-WhatsApp-optimised summary. Rules:
+clean bullet-point summary suitable for an email. Rules:
 - Synthesis only: frameworks, mental models, key metrics, chronology — in your own words.
-- Bold topic headers using *asterisks* (WhatsApp native).
-- Use _underscores_ for italic only on truly memorable one-liners (max 1–2 per summary).
+- Use plain-text formatting: each bullet starts with "- " followed by a bold header in the form "**Topic**: content".
 - Numbers over adjectives. Company names and specific metrics required.
+- Include 1-2 memorable quotes, clearly marked as quotes with quotation marks.
 - No editorialising. No filler. No transcript dumps.
-- Return 4–6 bullet points, each starting with a *Bold Header* — then 2–3 lines of substance.
+- Return 4–6 bullet points, each structured as: "- **Bold Header**: 2–3 lines of substance."
 - Keep the whole summary under 400 words."""
 
 NEWSLETTER_SYSTEM = """You are a concise briefing writer. Given a newsletter article, produce a
-WhatsApp-optimised synopsis. Rules:
+clean bullet-point synopsis suitable for an email. Rules:
 - Synthesis only: major themes, data points, frameworks — in your own words.
-- Bold topic headers using *asterisks* (WhatsApp native).
-- Use _underscores_ for italic only on truly memorable one-liners (max 1).
+- Use plain-text formatting: each bullet starts with "- " followed by a bold header in the form "**Topic**: content".
 - Numbers over adjectives. Company names and specific metrics required.
 - No editorialising. No filler.
-- Return 3–5 bullet points, each starting with a *Bold Header* — then 2–3 lines.
+- Return 3–5 bullet points, each structured as: "- **Bold Header**: 2–3 lines."
 - Keep the whole synopsis under 300 words."""
 
 

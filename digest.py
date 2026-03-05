@@ -2,8 +2,8 @@
 """
 Main digest orchestrator.
 
-Checks all feeds, processes new items, sends WhatsApp messages,
-generates PDFs, and logs to Notion.
+Checks all feeds, processes new items, generates AI summaries,
+creates PDFs, emails them with attachments, and logs to Notion.
 
 Run manually:  python digest.py
 Scheduled:     cron runs this at 07:00 daily (see setup_cron.py)
@@ -18,7 +18,7 @@ import state
 import feed_checker
 import summariser
 import pdf_generator
-import whatsapp_sender
+import email_sender
 import notion_logger
 import transcript as transcript_mod
 import article_fetcher
@@ -32,13 +32,13 @@ def process_podcast(item: dict) -> None:
 
     print(f"\n[PODCAST] {podcast_name} — {title}")
 
-    # 1. Find Spotify link (preferred), fall back to YouTube
+    # 1. Find Spotify link (preferred), fall back to YouTube, then RSS URL
     spotify_url = transcript_mod.search_spotify(podcast_name, title)
     youtube_url = transcript_mod.search_youtube(f"{podcast_name} {title}")
     link = spotify_url or youtube_url or article_url
     print(f"  Link: {link}")
 
-    # 2. Fetch transcript from YouTube
+    # 2. Fetch transcript from YouTube via Supadata API
     raw_transcript = None
     if youtube_url:
         raw_transcript = transcript_mod.get_transcript(youtube_url)
@@ -52,7 +52,7 @@ def process_podcast(item: dict) -> None:
         podcast_name=podcast_name,
     )
 
-    # 4. Generate PDF
+    # 4. Generate PDF of full transcript / content
     pdf_path = pdf_generator.generate_pdf(
         title=title,
         content=content_for_pdf,
@@ -60,24 +60,14 @@ def process_podcast(item: dict) -> None:
     )
     print(f"  PDF: {pdf_path}")
 
-    # 5. Format and send WhatsApp message
-    # Guest info is not reliably available from RSS — extract from summary heuristically
-    guest_name = "Guest"
-    guest_role = ""
-    guest_bio = ""
-
-    message = whatsapp_sender.format_podcast_message(
+    # 5. Send email with summary + PDF attachment
+    email_sender.send_podcast_email(
         podcast_name=podcast_name,
         episode_title=title,
         link=link,
-        guest_name=guest_name,
-        guest_role=guest_role,
-        guest_bio=guest_bio,
         summary=summary,
-        pdf_attached=True,
+        pdf_path=pdf_path,
     )
-    sid = whatsapp_sender.send_message(message)
-    print(f"  WhatsApp SID: {sid}")
 
     # 6. Log to Notion
     notion_logger.log_item(
@@ -112,7 +102,7 @@ def process_newsletter(item: dict) -> None:
         publication=publication,
     )
 
-    # 3. Generate PDF
+    # 3. Generate PDF of full article
     pdf_path = pdf_generator.generate_pdf(
         title=title,
         content=article_text,
@@ -120,19 +110,15 @@ def process_newsletter(item: dict) -> None:
     )
     print(f"  PDF: {pdf_path}")
 
-    # 4. Format and send WhatsApp message
-    context = cfg.get("note", f"{author}'s newsletter" if author else "")
-    message = whatsapp_sender.format_newsletter_message(
+    # 4. Send email with synopsis + PDF attachment
+    email_sender.send_newsletter_email(
         publication=publication,
         author=author,
         article_title=title,
         article_url=article_url,
-        context=context,
         synopsis=synopsis,
-        pdf_attached=True,
+        pdf_path=pdf_path,
     )
-    sid = whatsapp_sender.send_message(message)
-    print(f"  WhatsApp SID: {sid}")
 
     # 5. Log to Notion
     notion_logger.log_item(
@@ -175,9 +161,9 @@ def run_digest() -> None:
         except Exception as e:
             print(f"[ERROR] Failed to process newsletter {item['title']}: {e}")
 
-    # Send daily count summaries
-    whatsapp_sender.send_daily_summary(len(podcasts), len(newsletters))
-    print(f"\n✅ Done. {len(podcasts)} podcast(s), {len(newsletters)} newsletter(s) sent.")
+    # Send daily summary email
+    email_sender.send_daily_summary_email(len(podcasts), len(newsletters))
+    print(f"\n✅ Done. {len(podcasts)} podcast(s), {len(newsletters)} newsletter(s) emailed to {os.getenv('EMAIL_TO', '?')}.")
 
 
 if __name__ == "__main__":
