@@ -1,0 +1,19 @@
+version: 1
+
+rules:
+  # Enforce Python idioms and simplifications
+  enable:
+    - default
+
+refactor:
+  # Skip files that are auto-generated or unlikely to benefit
+  skip_files:
+    - setup_cron.py   # cron string manipulation is intentionally verbose
+
+ignore:
+  # Don't flag intentional no-ops or framework-required patterns
+  - name: use-named-expression
+    # walrus operator hurts readability in async I/O code
+    paths:
+      - transcript.py
+      - feed_checker.py

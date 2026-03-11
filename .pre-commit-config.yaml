@@ -1,0 +1,8 @@
+repos:
+  - repo: https://github.com/sourcery-ai/sourcery
+    rev: v1.26.0
+    hooks:
+      - id: sourcery
+        # To run Sourcery locally, set SOURCERY_TOKEN in your environment.
+        # Sign up at https://sourcery.ai and run: sourcery login
+        args: [--diff=git diff HEAD, --no-summary]
