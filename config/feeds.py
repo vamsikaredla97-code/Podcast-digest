@@ -88,6 +88,15 @@ PODCAST_FEEDS = [
         "spotify_show_url": "https://open.spotify.com/show/2Ni3Tese9CtZa3oxpCjgTg",
         "type": "podcast",
     },
+    {
+        "name": "Better Offline",
+        "short_name": "Better Offline",
+        # Ed Zitron — tech industry criticism. Hosted on Omny Studio / iHeart.
+        # Apple Podcasts ID: 1730587238
+        "rss_url": "https://www.omnycontent.com/d/playlist/e73c998e-6e60-432f-8610-ae210140c5b1/cf0c25ad-cf01-4da5-ae1c-b0fc015f790e/53ed270b-7147-4f70-81c2-b0fc015fe4ed/podcast.rss",
+        "spotify_show_url": "https://open.spotify.com/show/2dBPt1j2DoNij1kVdx8Ig6",
+        "type": "podcast",
+    },
 ]
 
 NEWSLETTER_FEEDS = [

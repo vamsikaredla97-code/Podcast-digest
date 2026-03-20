@@ -24,7 +24,8 @@ import transcript as transcript_mod
 import article_fetcher
 
 
-def process_podcast(item: dict) -> None:
+def process_podcast(item: dict) -> dict:
+    """Process a podcast episode and return its email payload (without sending)."""
     cfg = item["feed_config"]
     title = item["title"]
     podcast_name = cfg["name"]
@@ -60,16 +61,7 @@ def process_podcast(item: dict) -> None:
     )
     print(f"  PDF: {pdf_path}")
 
-    # 5. Send email with summary + PDF attachment
-    email_sender.send_podcast_email(
-        podcast_name=podcast_name,
-        episode_title=title,
-        link=link,
-        summary=summary,
-        pdf_path=pdf_path,
-    )
-
-    # 6. Log to Notion
+    # 5. Log to Notion
     notion_logger.log_item(
         title=title,
         publication=podcast_name,
@@ -79,8 +71,16 @@ def process_podcast(item: dict) -> None:
         item_type="Podcast",
     )
 
-    # 7. Mark seen
+    # 6. Mark seen
     state.mark_seen(item["item_id"])
+
+    return {
+        "podcast_name": podcast_name,
+        "episode_title": title,
+        "link": link,
+        "summary": summary,
+        "pdf_path": pdf_path,
+    }
 
 
 def process_newsletter(item: dict) -> None:
@@ -149,11 +149,20 @@ def run_digest() -> None:
 
     print(f"Found {len(podcasts)} new podcast episode(s) and {len(newsletters)} new newsletter(s).")
 
+    processed_podcasts = []
     for item in podcasts:
         try:
-            process_podcast(item)
+            payload = process_podcast(item)
+            processed_podcasts.append(payload)
         except Exception as e:
             print(f"[ERROR] Failed to process podcast {item['title']}: {e}")
+
+    # Send all episodes in one email if multiple, otherwise a single email
+    if len(processed_podcasts) == 1:
+        ep = processed_podcasts[0]
+        email_sender.send_podcast_email(**ep)
+    elif len(processed_podcasts) > 1:
+        email_sender.send_combined_podcast_email(processed_podcasts)
 
     for item in newsletters:
         try:

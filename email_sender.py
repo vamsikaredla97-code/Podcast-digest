@@ -220,6 +220,63 @@ def send_newsletter_email(
     print(f"  Email sent → {EMAIL_TO}")
 
 
+def send_combined_podcast_email(
+    episodes: list[dict],
+) -> None:
+    """
+    Send all of today's podcast episodes in a single email.
+
+    Each dict in `episodes` must have:
+        podcast_name, episode_title, link, summary, pdf_path (str | None)
+
+    All PDFs are attached to the same message. Each episode gets its own
+    full header + meta block + summary section — nothing is compressed.
+    """
+    today_str = date.today().strftime("%B %-d, %Y")
+    names = ", ".join(e["podcast_name"] for e in episodes)
+    subject = f"[Podcasts] {today_str} — {len(episodes)} episodes"
+
+    sections = []
+    for i, ep in enumerate(episodes):
+        divider = '<hr style="border:none;border-top:1px solid #eee;margin:32px 0;">' if i > 0 else ""
+        meta_html = f"""\
+<div class="meta">
+  <b>Podcast:</b> {ep['podcast_name']}<br>
+  <b>Episode:</b> {ep['episode_title']}<br>
+  <b>Link:</b> <a href="{ep['link']}">{ep['link']}</a><br>
+  <b>Date:</b> {today_str}
+</div>"""
+        summary_html = f'<div class="summary">{_summary_to_html(ep["summary"])}</div>'
+        pdf_note = '<p class="pdf-note">📎 Full transcript PDF attached.</p>' if ep.get("pdf_path") else ""
+        sections.append(f"""\
+{divider}
+<div class="header" style="background:#1c2b4a;">
+  <h1>🎙️ {ep['podcast_name']}</h1>
+  <p>{ep['episode_title']}</p>
+</div>
+{meta_html}
+{summary_html}
+{pdf_note}""")
+
+    html = _HTML_BASE.format(
+        body="\n".join(sections),
+        header_color="#1c2b4a",
+        today=today_str,
+    )
+
+    msg = MIMEMultipart("mixed")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_FROM
+    msg["To"] = EMAIL_TO
+    msg.attach(MIMEText(html, "html"))
+    for ep in episodes:
+        if ep.get("pdf_path"):
+            _attach_pdf(msg, ep["pdf_path"])
+
+    _send(msg)
+    print(f"  Combined email ({len(episodes)} episodes) sent → {EMAIL_TO}")
+
+
 def send_daily_summary_email(podcast_count: int, newsletter_count: int) -> None:
     """Send a brief end-of-run summary email."""
     today_str = date.today().strftime("%B %-d, %Y")
