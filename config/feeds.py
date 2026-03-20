@@ -70,6 +70,24 @@ PODCAST_FEEDS = [
         "spotify_show_url": "https://open.spotify.com/show/6E709HRH7XaiZrMfgtNCun",
         "type": "podcast",
     },
+    {
+        "name": "The Peel with Turner Novak",
+        "short_name": "The Peel",
+        # VC/founder interviews. Hosted on Spotify for Creators (Anchor).
+        # Apple Podcasts ID: 1694440669
+        "rss_url": "https://anchor.fm/s/e231a4ec/podcast/rss",
+        "spotify_show_url": "https://open.spotify.com/show/3QqtxGHqsPnKTG4CS7NgX5",
+        "type": "podcast",
+    },
+    {
+        "name": "Sourcery with Molly O'Shea",
+        "short_name": "Sourcery",
+        # VC deals + founder/investor interviews. Hosted on Spotify for Creators (Anchor).
+        # Apple Podcasts ID: 1738124704
+        "rss_url": "https://anchor.fm/s/f192713c/podcast/rss",
+        "spotify_show_url": "https://open.spotify.com/show/2Ni3Tese9CtZa3oxpCjgTg",
+        "type": "podcast",
+    },
 ]
 
 NEWSLETTER_FEEDS = [
